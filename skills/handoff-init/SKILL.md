@@ -1,15 +1,15 @@
 ---
-name: initializing-agent-handoffs
-description: Use when a coding repository has no established handoff format, storage location, validation policy, or continuation protocol for work transferred between agents or sessions — typically before the first handoff, or when .handoff/ setup is missing, stale, or damaged (e.g. /handoff-init)
+name: handoff-init
+description: Use when a coding repository lacks a reliable handoff format, storage location, validation policy, or continuation protocol, especially before its first handoff or when .handoff/ setup is missing, stale, or damaged (e.g. /handoff-init)
 ---
 
-# Initializing Agent Handoffs
+# Handoff Init
 
 ## Overview
 
 Initialize a repository-level handoff protocol once, then keep it safe to re-run. The core principle is: **persistent project policy belongs in initialization; live work state belongs in the handoff artifact.**
 
-Typical invocation: `/handoff-init`.
+Typical explicit invocation: `/handoff-init`.
 
 ## When to Use
 
@@ -17,14 +17,14 @@ Typical invocation: `/handoff-init`.
 - No `.handoff/config.yaml` exists.
 - Existing handoff setup is incomplete, stale, or damaged.
 
-Do not use this to transfer current work. Use `creating-agent-handoffs` for that.
+Do not use this to transfer current work. Use `handoff-create` for that.
 
 ## Required Workflow
 
 1. Locate the repository root and read applicable project instructions such as `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, manifests, task runners, and CI configuration.
 2. Inspect any existing `.handoff/` files. Preserve user-authored values and history.
-3. Discover validation commands from repository evidence. Never invent commands. Record uncertain commands as unverified.
-4. Create or reconcile this structure:
+3. Discover validation commands from repository evidence. Do not add an uncertain or potentially destructive command. Preserve an existing unverified command unless it is proven unsafe, do not execute it, and report it as unresolved.
+4. Create or reconcile this structure. When a contract file is missing, write the exact contract below rather than approximating it:
 
 ```text
 .handoff/
@@ -33,7 +33,7 @@ Do not use this to transfer current work. Use `creating-agent-handoffs` for that
 └── history/
 ```
 
-Do **not** create an active `HANDOFF.md`; only `creating-agent-handoffs` creates one.
+Do **not** create an active `HANDOFF.md`; only `handoff-create` creates one.
 
 5. Verify all paths and commands, note whether `.handoff/` is Git-ignored, then report created, preserved, changed, and unresolved items. Whether handoff files are committed is the user's decision; do not edit `.gitignore`.
 
@@ -51,11 +51,11 @@ require_next_action: true
 require_fact_hypothesis_separation: true
 ```
 
-Populate `validation_commands` only with commands supported by repository files or successfully executed discovery. `checkpoint_policy: preserve-worktree` means handoff commands must not reset, clean, or discard inherited changes. A checkpoint commit may be created only when explicitly authorized by the user or repository policy.
+Each `validation_commands` entry is a shell command string run from the repository root. Add a command only when repository files support it and its expected effect is validation rather than deployment or mutation. For an existing unverified entry, preserve the value, skip execution, and report the uncertainty; remove it only when repository evidence proves it invalid or unsafe. `checkpoint_policy: preserve-worktree` means handoff commands must not reset, clean, or discard inherited changes. A checkpoint commit may be created only when explicitly authorized by the user or repository policy.
 
 ## Template Contract
 
-Create `.handoff/template.md` with these required headings, in this order:
+Create `.handoff/template.md` with these required headings, in this order. If the file is missing or lacks required headings, preserve any compatible user-authored content and write the exact contract below. Never invent substitute headings or a smaller fallback template.
 
 ```markdown
 # Agent Handoff
@@ -77,7 +77,7 @@ Create `.handoff/template.md` with these required headings, in this order:
 ## Next Recommended Action
 ```
 
-`Metadata` must include: a unique handoff ID, ISO 8601 timestamp, author agent or session, branch, HEAD commit, and `Status`. Status lifecycle: `ready` (set by the creator) → `accepted` (set by the receiver after verification); replaced handoffs move to the history directory.
+`Metadata` must include: a unique handoff ID, ISO 8601 timestamp, author agent or session, branch, HEAD commit, and `Status`. Status lifecycle: `ready` (set by `handoff-create`) → `accepted` (set by `handoff-resume` after intake); replaced handoffs move to the configured history directory.
 
 `Next Recommended Action` must contain one concrete action, target files, first command, expected current result, and completion condition.
 
@@ -89,7 +89,7 @@ Create `.handoff/template.md` with these required headings, in this order:
 | Valid setup | Verify it; make no cosmetic rewrite. |
 | Missing fields | Add only missing required fields. |
 | User-customized values | Preserve them unless invalid or unsafe. |
-| Unknown validation command | Mark unverified; do not guess. |
+| Existing unknown validation command | Preserve it, do not execute it, and report it as unverified. |
 | Existing `HANDOFF.md` | Preserve it untouched. |
 
 ## Completion Gate
@@ -97,13 +97,14 @@ Create `.handoff/template.md` with these required headings, in this order:
 Initialization is complete only when:
 
 - Configuration and template agree on paths and required sections.
-- Validation commands have traceable repository evidence.
+- New validation commands have traceable repository evidence; existing unverified commands are preserved, skipped, and reported.
 - Re-running initialization would not erase user changes or history.
 - No active handoff was fabricated.
 
 ## Red Flags
 
 - Overwriting `.handoff/` because regeneration is easier.
+- Inventing alternative template headings instead of repairing the defined contract.
 - Creating a blank `HANDOFF.md` that looks active.
 - Guessing `test`, `lint`, `build`, or `typecheck` commands.
 - Adding automatic commits, resets, stashes, or cleans without authorization.

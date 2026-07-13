@@ -1,19 +1,19 @@
 ---
-name: creating-agent-handoffs
-description: Use when transferring incomplete coding work to another agent or session — context nearly exhausted or about to be compacted, session ending, work pausing before completion, or the user asks to hand off current work (e.g. /handoff-out)
+name: handoff-create
+description: Use when incomplete coding work must transfer to another agent or session because context is nearly exhausted, compaction or session end is approaching, work is pausing, or the user explicitly requests a handoff (e.g. /handoff-create)
 ---
 
-# Creating Agent Handoffs
+# Handoff Create
 
 ## Overview
 
 Create an executable continuation artifact, not a conversation summary. The core principle is: **transfer repository truth, verification evidence, decisions, and one precise next action.**
 
-Typical invocation: `/handoff-out`.
+Typical explicit invocation: `/handoff-create`.
 
 ## Preflight
 
-If `.handoff/config.yaml` or `.handoff/template.md` is missing, run `initializing-agent-handoffs` first, then continue. If there is no time or context left to initialize, write the artifact anyway using the section list from that skill's Template Contract — never skip the handoff because setup is missing.
+If `.handoff/config.yaml` or `.handoff/template.md` is missing, run `handoff-init` first, then continue. If context is too limited to initialize, use `handoff-init`'s exact default active path, history path, and Template Contract; do not invent fallback paths or headings.
 
 Read project instructions and inspect:
 
@@ -34,11 +34,20 @@ If the directory is not a Git repository, record that fact and continue with ava
 3. Separate status into completed, partially completed, and not started.
 4. Separate verified facts, observations, and unverified hypotheses.
 5. Record session-only knowledge the repository cannot show: user instructions and preferences stated in conversation, rejected approaches and why, and environment specifics such as running services or required environment variables (reference secret names, never values).
-6. Run the smallest relevant validations plus configured commands that are reasonable for the current state. Record the exact command, result, and meaningful failure detail.
-7. Preserve the worktree. Never use `reset`, `clean`, destructive checkout, or unrequested stash. Create a checkpoint commit only when explicitly authorized.
-8. If an active `HANDOFF.md` exists, copy it to the configured history directory (named by its ID or timestamp) before replacing it. Never delete history.
-9. Write the active file at the configured path using `.handoff/template.md`. Fill `Metadata` per the contract in `initializing-agent-handoffs`, with `Status: ready`.
+6. Run the smallest relevant validations plus configured commands that are safe and reasonable for the current state. Record the exact command, result, and meaningful failure detail.
+7. Stay within the Mutation Budget below. Preserve the worktree and create a checkpoint only when the user or repository policy explicitly authorizes that specific operation.
+8. If an active handoff exists, copy it to the configured history directory using its ID or timestamp before replacement. If that destination exists, add a unique suffix; never overwrite history.
+9. Write the active file at the configured path using `.handoff/template.md`. Fill `Metadata` per `handoff-init`, with `Status: ready`.
 10. Re-read the artifact against the actual repository state before declaring it ready.
+
+## Mutation Budget
+
+Handoff creation may change only the handoff artifacts by default:
+
+- Archive the existing active handoff in the configured history directory.
+- Write the new active handoff at the configured path.
+
+Leave implementation files and untracked files in place. Do not switch or create branches, alter the index, move or quarantine files, commit, tag, stash, reset, or clean unless that exact operation is explicitly authorized. If a file may contain a secret, record only its path, the risk, and the required owner action; never copy its value into the handoff or history.
 
 ## Required Repository State
 
@@ -67,7 +76,7 @@ Only `PASS`, `FAIL`, or `NOT RUN` are allowed. Never imply success for an unexec
 
 ## Next Action Contract
 
-The final action must be singular and executable:
+The final action must be singular and executable: one action, not a checklist or multi-step plan.
 
 ```markdown
 ## Next Recommended Action
@@ -108,3 +117,4 @@ Most bad handoffs are written in the last 5% of context. These excuses mean STOP
 - Listing files without explaining what changed and why.
 - Hiding failed or unrun validations.
 - Altering implementation merely to make the handoff look cleaner.
+- Inventing an archive path, moving an untracked file, or creating a branch or commit outside the Mutation Budget.
