@@ -1,6 +1,6 @@
 ---
 name: initializing-agent-handoffs
-description: Use when a coding repository has no established handoff format, storage location, validation policy, or continuation protocol for work transferred between agents or sessions
+description: Use when a coding repository has no established handoff format, storage location, validation policy, or continuation protocol for work transferred between agents or sessions — typically before the first handoff, or when .handoff/ setup is missing, stale, or damaged (e.g. /handoff-init)
 ---
 
 # Initializing Agent Handoffs
@@ -35,7 +35,7 @@ Do not use this to transfer current work. Use `creating-agent-handoffs` for that
 
 Do **not** create an active `HANDOFF.md`; only `creating-agent-handoffs` creates one.
 
-5. Verify all paths and commands, then report created, preserved, changed, and unresolved items.
+5. Verify all paths and commands, note whether `.handoff/` is Git-ignored, then report created, preserved, changed, and unresolved items. Whether handoff files are committed is the user's decision; do not edit `.gitignore`.
 
 ## Configuration Contract
 
@@ -77,6 +77,8 @@ Create `.handoff/template.md` with these required headings, in this order:
 ## Next Recommended Action
 ```
 
+`Metadata` must include: a unique handoff ID, ISO 8601 timestamp, author agent or session, branch, HEAD commit, and `Status`. Status lifecycle: `ready` (set by the creator) → `accepted` (set by the receiver after verification); replaced handoffs move to the history directory.
+
 `Next Recommended Action` must contain one concrete action, target files, first command, expected current result, and completion condition.
 
 ## Idempotency Rules
@@ -105,3 +107,4 @@ Initialization is complete only when:
 - Creating a blank `HANDOFF.md` that looks active.
 - Guessing `test`, `lint`, `build`, or `typecheck` commands.
 - Adding automatic commits, resets, stashes, or cleans without authorization.
+- Silently adding `.handoff/` to `.gitignore` or committing it unasked.

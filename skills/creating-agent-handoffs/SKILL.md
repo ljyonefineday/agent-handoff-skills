@@ -1,6 +1,6 @@
 ---
 name: creating-agent-handoffs
-description: Use when transferring incomplete coding work to another agent or session, approaching context limits, pausing before completion, or preserving an executable continuation point
+description: Use when transferring incomplete coding work to another agent or session — context nearly exhausted or about to be compacted, session ending, work pausing before completion, or the user asks to hand off current work (e.g. /handoff-out)
 ---
 
 # Creating Agent Handoffs
@@ -13,7 +13,7 @@ Typical invocation: `/handoff-out`.
 
 ## Preflight
 
-If `.handoff/config.yaml` or `.handoff/template.md` is missing, use `initializing-agent-handoffs` first, then continue. Do not block an urgent handoff merely because initialization was forgotten.
+If `.handoff/config.yaml` or `.handoff/template.md` is missing, run `initializing-agent-handoffs` first, then continue. If there is no time or context left to initialize, write the artifact anyway using the section list from that skill's Template Contract — never skip the handoff because setup is missing.
 
 Read project instructions and inspect:
 
@@ -33,11 +33,12 @@ If the directory is not a Git repository, record that fact and continue with ava
 2. Inspect changed and relevant files. Describe behavior and impact, not only filenames.
 3. Separate status into completed, partially completed, and not started.
 4. Separate verified facts, observations, and unverified hypotheses.
-5. Run the smallest relevant validations plus configured commands that are reasonable for the current state. Record the exact command, result, and meaningful failure detail.
-6. Preserve the worktree. Never use `reset`, `clean`, destructive checkout, or unrequested stash. Create a checkpoint commit only when explicitly authorized.
-7. If an active `HANDOFF.md` exists, copy it to the configured history directory before replacing it. Never delete history.
-8. Write `HANDOFF.md` using `.handoff/template.md`, set status to `ready`, and include a unique handoff ID and timestamp.
-9. Re-read the artifact against the actual repository state before declaring it ready.
+5. Record session-only knowledge the repository cannot show: user instructions and preferences stated in conversation, rejected approaches and why, and environment specifics such as running services or required environment variables (reference secret names, never values).
+6. Run the smallest relevant validations plus configured commands that are reasonable for the current state. Record the exact command, result, and meaningful failure detail.
+7. Preserve the worktree. Never use `reset`, `clean`, destructive checkout, or unrequested stash. Create a checkpoint commit only when explicitly authorized.
+8. If an active `HANDOFF.md` exists, copy it to the configured history directory (named by its ID or timestamp) before replacing it. Never delete history.
+9. Write the active file at the configured path using `.handoff/template.md`. Fill `Metadata` per the contract in `initializing-agent-handoffs`, with `Status: ready`.
+10. Re-read the artifact against the actual repository state before declaring it ready.
 
 ## Required Repository State
 
@@ -85,8 +86,20 @@ A handoff is ready only when:
 - Every claimed change exists in the repository.
 - All validation claims match actual command results.
 - Uncommitted work is preserved and clearly described.
-- Constraints and rejected alternatives are recorded when they affect continuation.
+- Constraints, user-stated instructions, and rejected alternatives are recorded when they affect continuation.
 - The receiver can begin with one exact command without reconstructing the conversation.
+
+## Context-Pressure Rationalizations
+
+Most bad handoffs are written in the last 5% of context. These excuses mean STOP:
+
+| Excuse | Reality |
+|---|---|
+| "No context left to run validations" | Record `NOT RUN` honestly. A fabricated PASS costs the receiver hours. |
+| "The receiver can read the diff" | The diff shows what changed, not why. Decisions die with the session. |
+| "A conversation summary is enough" | Summaries transfer narrative; handoffs transfer executable state. |
+| "Tests passed earlier" | Earlier ≠ current worktree. Re-run, or record `NOT RUN` noting the stale result. |
+| "I'll skip sections to save tokens" | A short honest handoff beats a complete-looking fabricated one. Write `UNKNOWN` in gaps. |
 
 ## Red Flags
 

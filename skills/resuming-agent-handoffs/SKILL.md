@@ -1,6 +1,6 @@
 ---
 name: resuming-agent-handoffs
-description: Use when continuing coding work from another agent or session, inheriting a handoff document, checkpoint branch, patch, or repository containing partially completed changes
+description: Use when continuing coding work from another agent or session — a HANDOFF.md, checkpoint branch, or patch exists, the repository contains partially completed changes, or the user asks to pick up where a previous session left off (e.g. /handoff-in)
 ---
 
 # Resuming Agent Handoffs
@@ -36,7 +36,7 @@ git diff --cached --stat
 5. Inspect the files named in `Implemented Changes` and `Next Recommended Action` before changing them.
 6. Re-run the smallest relevant validation. Use configured commands where applicable, but do not convert an old `PASS` into a current fact without execution.
 7. Produce the intake report below. After the report, continue with the recorded next action unless the user requested inspection only or a discrepancy makes that action unsafe.
-8. Once the handoff is understood and minimum verification is complete, update its status from `ready` to `accepted`. Preserve the original content and append intake findings rather than rewriting history.
+8. Once the handoff is understood and minimum verification is complete, update its status from `ready` to `accepted` and append the intake report to the active handoff file under a `## Intake` heading. Preserve the original content rather than rewriting history.
 
 ## Required Intake Report
 
@@ -75,6 +75,7 @@ git diff --cached --stat
 | Old PASS now fails | Treat the current failure as truth and record both results. |
 | Next action is unsafe or obsolete | Replace it with the smallest verified action and explain why. |
 | Handoff lacks required sections | Reconstruct only from repository evidence; mark gaps unknown. |
+| No handoff artifact exists at all | Say so; reconstruct objective and state from Git history and the worktree, and mark everything else unknown. |
 
 ## Continuation Rules
 
