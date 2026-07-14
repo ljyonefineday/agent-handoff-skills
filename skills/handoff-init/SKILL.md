@@ -47,8 +47,6 @@ active_file: HANDOFF.md
 history_directory: .handoff/history
 validation_commands: []
 checkpoint_policy: preserve-worktree
-require_next_action: true
-require_fact_hypothesis_separation: true
 ```
 
 Each `validation_commands` entry is a shell command string run from the repository root. Add a command only when repository files support it and its expected effect is validation rather than deployment or mutation. For an existing unverified entry, preserve the value, skip execution, and report the uncertainty; remove it only when repository evidence proves it invalid or unsafe. `checkpoint_policy: preserve-worktree` means handoff commands must not reset, clean, or discard inherited changes. A checkpoint commit may be created only when explicitly authorized by the user or repository policy.
@@ -77,9 +75,11 @@ Create `.handoff/template.md` with these required headings, in this order. If th
 ## Next Recommended Action
 ```
 
-`Metadata` must include: a unique handoff ID, ISO 8601 timestamp, author agent or session, branch, HEAD commit, and `Status`. Status lifecycle: `ready` (set by `handoff-create`) → `accepted` (set by `handoff-resume` after intake); replaced handoffs move to the configured history directory.
+`Metadata` must include: a unique handoff ID, ISO 8601 timestamp, author agent or session, branch, HEAD commit, and `Status`. Status lifecycle: `ready` (set by `handoff-create`) → `accepted` (set by `handoff-resume` after intake); replaced handoffs move to the configured history directory. History is append-only; prune it manually if it grows and never auto-delete entries.
 
 `Next Recommended Action` must contain one concrete action, target files, first command, expected current result, and completion condition.
+
+During intake, `handoff-resume` appends a trailing `## Intake` section to the active handoff. That section is a sanctioned addition to the artifact, not template drift, and `handoff-create` never writes it.
 
 ## Idempotency Rules
 

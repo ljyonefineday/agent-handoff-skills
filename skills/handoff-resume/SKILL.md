@@ -42,7 +42,7 @@ git diff --cached --stat
 
 `Status: accepted` means the receiver completed intake and recorded current evidence; it does not endorse every handoff claim, resolve discrepancies, or mark implementation complete.
 
-If the active handoff exists, is writable, has `Status: ready`, and the task permits edits, change that status to `accepted` and append the intake report under `## Intake`. If its status differs, preserve it and record the mismatch instead of forcing a transition.
+If the active handoff exists, is writable, has `Status: ready`, and the task permits edits, change that status to `accepted` and append the intake report under `## Intake` (a sanctioned trailing section per `handoff-init`'s Template Contract). If its status differs, preserve it and record the mismatch instead of forcing a transition.
 
 If no active handoff exists, return the intake report from repository evidence and do not create an artifact merely to mark it accepted. For inspection-only work or a read-only artifact, report intake without modifying files.
 
@@ -90,7 +90,7 @@ If no active handoff exists, return the intake report from repository evidence a
 - Prefer extending verified working code over rewriting it for stylistic reasons.
 - Preserve constraints and invariants until code or tests prove they are obsolete.
 - Convert hypotheses into facts only through inspection or reproducible validation.
-- Update the configured active handoff with material new findings when the task permits edits so another handoff remains possible.
+- Update the configured active handoff with material new findings when the task permits edits so another handoff remains possible; when work pauses again, use `handoff-create` to produce the next artifact.
 - Before claiming completion, run the relevant test, lint, typecheck, or build commands and record actual results.
 
 ## Completion Gate

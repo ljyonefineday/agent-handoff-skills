@@ -1,0 +1,2 @@
+# Local-only: structural lint for the skills; not needed in the published repo
+tests/

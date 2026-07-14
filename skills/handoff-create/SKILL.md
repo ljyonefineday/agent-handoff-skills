@@ -13,7 +13,13 @@ Typical explicit invocation: `/handoff-create`.
 
 ## Preflight
 
-If `.handoff/config.yaml` or `.handoff/template.md` is missing, run `handoff-init` first, then continue. If context is too limited to initialize, use `handoff-init`'s exact default active path, history path, and Template Contract; do not invent fallback paths or headings.
+**REQUIRED SUB-SKILL:** If `.handoff/config.yaml` or `.handoff/template.md` is missing, run `handoff-init` first, then continue.
+
+If context is too limited to initialize, do not invent paths or headings. Write `HANDOFF.md` at the repository root using the fallback contract below; `handoff-init` remains the source of truth whenever `.handoff/template.md` exists on disk or the skill can be loaded.
+
+- Active file `HANDOFF.md`; history directory `.handoff/history/`.
+- Required headings, in order: `# Agent Handoff`, `## Metadata`, `## Objective`, `## Completion Criteria`, `## Current Status` (with `### Completed`, `### Partially Completed`, `### Not Started`), `## Repository State`, `## Implemented Changes`, `## Decisions and Rationale`, `## Constraints and Invariants`, `## Validation Results`, `## Known Issues`, `## Unverified Hypotheses`, `## Next Recommended Action`.
+- `Metadata` fields: unique handoff ID, ISO 8601 timestamp, author agent or session, branch, HEAD commit, and `Status: ready`.
 
 Read project instructions and inspect:
 
@@ -37,12 +43,12 @@ If the directory is not a Git repository, record that fact and continue with ava
 6. Run the smallest relevant validations plus configured commands that are safe and reasonable for the current state. Record the exact command, result, and meaningful failure detail.
 7. Stay within the Mutation Budget below. Preserve the worktree and create a checkpoint only when the user or repository policy explicitly authorizes that specific operation.
 8. If an active handoff exists, copy it to the configured history directory using its ID or timestamp before replacement. If that destination exists, add a unique suffix; never overwrite history.
-9. Write the active file at the configured path using `.handoff/template.md`. Fill `Metadata` per `handoff-init`, with `Status: ready`.
+9. Write the active handoff at the configured path using `.handoff/template.md`. Fill `Metadata` per `handoff-init`, with `Status: ready`.
 10. Re-read the artifact against the actual repository state before declaring it ready.
 
 ## Mutation Budget
 
-Handoff creation may change only the handoff artifacts by default:
+Handoff creation may change only the handoff artifacts by default, and honors `checkpoint_policy` from `.handoff/config.yaml` (`preserve-worktree` forbids any reset, clean, stash, or discard of inherited changes):
 
 - Archive the existing active handoff in the configured history directory.
 - Write the new active handoff at the configured path.
