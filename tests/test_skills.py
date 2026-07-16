@@ -365,7 +365,7 @@ class ReadmeTests(unittest.TestCase):
 
 
 class EvaluationFixtureTests(unittest.TestCase):
-    def test_five_fresh_context_scenarios_exist(self) -> None:
+    def test_fresh_context_scenarios_exist(self) -> None:
         fixture_dir = ROOT / "tests" / "fixtures"
         expected = {
             "high-context-dirty-work.md",
@@ -373,6 +373,7 @@ class EvaluationFixtureTests(unittest.TestCase):
             "stale-resume.md",
             "incompatible-init.md",
             "end-to-end-continuation.md",
+            "cross-runtime-constraint.md",
         }
         self.assertEqual(
             {path.name for path in fixture_dir.glob("*.md") if path.name != "README.md"},
@@ -417,6 +418,17 @@ class EvaluationFixtureTests(unittest.TestCase):
         for term in ("User constraint", "Rejected decision", "freshly FAIL", "Safe next action"):
             self.assertIn(term, text)
 
+    def test_cross_runtime_fixture_seeds_instruction_file_constraint(self) -> None:
+        text = read(ROOT / "tests" / "fixtures" / "cross-runtime-constraint.md")
+        for term in (
+            "User constraint", "instruction file", "different agent runtime", "freshly FAIL",
+        ):
+            self.assertIn(term, text)
+        self.assertRegex(text, r"(?i)exists only in the sender")
+        self.assertRegex(text, r"(?i)restat.{0,120}Continuation Context")
+        self.assertRegex(text, r"(?i)runtime-neutral")
+        self.assertRegex(text, r"(?i)(omitt?ing|omitted).{0,60}constraint")
+
     def test_rubric_has_weights_fatal_errors_and_reduction_gate(self) -> None:
         text = read(ROOT / "tests" / "fixtures" / "README.md")
         weights = {
@@ -444,6 +456,8 @@ class EvaluationFixtureTests(unittest.TestCase):
         self.assertTrue(path.is_file())
         text = read(path)
         for evidence in ("e7c2063", "100/100", "zero fatal", "49.2%", "675", "343"):
+            self.assertIn(evidence, text)
+        for evidence in ("cross-runtime constraint", "8/8 restated", "ready → accepted"):
             self.assertIn(evidence, text)
 
 

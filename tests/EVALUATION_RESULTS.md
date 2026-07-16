@@ -46,3 +46,32 @@ After review tightened archival safety, a fresh revised-v2 agent ran both incomp
 - Median reduction at least 30%: PASS.
 
 Result: **ACCEPT**.
+
+## 2026-07-17 cross-runtime constraint survival check
+
+A sixth scenario (`tests/fixtures/cross-runtime-constraint.md`) probed whether a material
+constraint whose only source is the sender runtime's instruction file (`CLAUDE.md`) survives
+into the artifact for a receiver on a different agent runtime that never loads that file.
+
+Control arm only — the shipped skills at `0b840a0`, unmodified. Fresh sender agents ran the
+`handoff-create` instructions against a live scenario repository (pinned-API constraint only in
+`CLAUDE.md`; staged refactor; unstaged, freshly failing boundary test; untracked
+rename-temptation note): 9 launches, 8 complete artifacts. One launch aborted mid-run on a
+provider stream error and produced no artifact; its rerun wrote a complete artifact and lost
+only its final status report to a provider session limit. Senders: 5 Claude Fable 5,
+3 Claude Haiku 4.5.
+
+Result: **8/8 restated** the pinned-API constraint substantively inside `Continuation Context`
+(0 pointer-only, 0 absent). All 8 recorded the fresh FAIL as current evidence, and no artifact
+contained agent-specific tooling instructions. Zero fatal errors under the existing rubric.
+Because the control arm never exhibited the hypothesized loss, no skill revision was authored;
+the scenario is retained as a permanent fixture.
+
+A live heterogeneous resume was also observed: codex-cli 0.144.5 (GPT-5), with this
+repository's unmodified `handoff-resume` installed under `~/.agents/skills`, resumed a
+Fable-created `ready` artifact. It verified branch, HEAD, and worktree; ran exactly one gating
+validation (FAIL, matching the recorded evidence); replaced the next action with a reasoned
+safer alternative (preserve the strict-`>` behavior and amend the new test, honoring the
+no-behavior-change objective) that satisfied the one-action contract; drove the suite to `OK`;
+appended one compact `## Intake` (Receiver: Codex (GPT-5)); transitioned `ready → accepted`;
+and preserved inherited files and pinned signatures. No commit or push occurred.

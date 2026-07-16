@@ -1,3 +1,4 @@
 # Keep local Python cache files out of the repository.
 __pycache__/
 *.pyc
+tests/
