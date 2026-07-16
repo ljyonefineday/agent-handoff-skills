@@ -1,27 +1,21 @@
 ---
 name: handoff-create
-description: Use when incomplete coding work must transfer to another agent or session because context is nearly exhausted, compaction or session end is approaching, work is pausing, or the user explicitly requests a handoff (e.g. /handoff-create)
+description: Use when incomplete coding work must transfer to another session or collaborator without losing continuation-critical context.
 ---
 
 # Handoff Create
 
-## Overview
+Create a compact, executable continuation artifact from repository truth and current evidence.
 
-Create an executable continuation artifact, not a conversation summary. The core principle is: **transfer repository truth, verification evidence, decisions, and one precise next action.**
+## Safety and Preflight
 
-Typical explicit invocation: `/handoff-create`.
+Read project instructions and the v2 config/template. Both configured paths must be repository-relative, not absolute, contain no `..`, and resolve within the repository root. Stop on an unsafe path. Do not interpret v1 or any non-v2 artifact.
 
-## Preflight
+When setup is missing or non-v2, use the emergency reference: read [emergency guidance](references/emergency.md) only when setup is missing, incompatible, or an archive destination already exists.
 
-**REQUIRED SUB-SKILL:** If `.handoff/config.yaml` or `.handoff/template.md` is missing, run `handoff-init` first, then continue.
+`checkpoint_policy: preserve-worktree` forbids reset, clean, stash, branch switch, or discard. By default mutate only handoff artifacts: archive the old active artifact and write the new one. Never alter implementation, the index, branches, commits, tags, or untracked files.
 
-If context is too limited to initialize, do not invent paths or headings. Write `HANDOFF.md` at the repository root using the fallback contract below; `handoff-init` remains the source of truth whenever `.handoff/template.md` exists on disk or the skill can be loaded.
-
-- Active file `HANDOFF.md`; history directory `.handoff/history/`.
-- Required headings, in order: `# Agent Handoff`, `## Metadata`, `## Objective`, `## Completion Criteria`, `## Current Status` (with `### Completed`, `### Partially Completed`, `### Not Started`), `## Repository State`, `## Implemented Changes`, `## Decisions and Rationale`, `## Constraints and Invariants`, `## Validation Results`, `## Known Issues`, `## Unverified Hypotheses`, `## Next Recommended Action`.
-- `Metadata` fields: unique handoff ID, ISO 8601 timestamp, author agent or session, branch, HEAD commit, and `Status: ready`.
-
-Read project instructions and inspect:
+Capture live state first:
 
 ```bash
 git status --short
@@ -31,96 +25,46 @@ git diff --stat
 git diff --cached --stat
 ```
 
-If the directory is not a Git repository, record that fact and continue with available filesystem evidence.
+If Git is unavailable, record that and use filesystem evidence.
 
-## Required Workflow
+## Workflow
 
-1. Determine the objective and measurable completion criteria from the user request, code, and current session.
-2. Inspect changed and relevant files. Describe behavior and impact, not only filenames.
-3. Separate status into completed, partially completed, and not started.
-4. Separate verified facts, observations, and unverified hypotheses.
-5. Record session-only knowledge the repository cannot show: user instructions and preferences stated in conversation, rejected approaches and why, and environment specifics such as running services or required environment variables (reference secret names, never values).
-6. Run the smallest relevant validations plus configured commands that are safe and reasonable for the current state. Record the exact command, result, and meaningful failure detail.
-7. Stay within the Mutation Budget below. Preserve the worktree and create a checkpoint only when the user or repository policy explicitly authorizes that specific operation.
-8. If an active handoff exists, copy it to the configured history directory using its ID or timestamp before replacement. If that destination exists, add a unique suffix; never overwrite history.
-9. Write the active handoff at the configured path using `.handoff/template.md`. Fill `Metadata` per `handoff-init`, with `Status: ready`.
-10. Re-read the artifact against the actual repository state before declaring it ready.
+1. Derive the objective and completion boundary from the request, code, and current session. Inspect every changed or next-action path; summarize behavior and impact, not a full diff.
+2. Classify work as completed, in progress, or remaining. Record staged, unstaged, and untracked paths; branch, HEAD, base when known, and checkpoint status.
+3. Preserve only material continuation context: decisions, constraints, rejected approaches and reasons, environment and services, and secret names or paths, never values. Never copy secret values into active or archived artifacts.
+4. Run the smallest relevant safe validations plus supported configured commands. A stale or earlier `PASS` is not fresh; re-run it or record `NOT RUN`.
+5. Before archival, if the active artifact is known or suspected to contain a secret value, stop. Keep it and all work unchanged; ask the owner to sanitize it and rotate any exposed secret. Otherwise archive it before replacement and never overwrite history.
+6. Write the configured active file with a unique ID, ISO 8601 timestamp, sender/session, branch, HEAD, and `Status: ready`. Re-read every claim against the repository.
 
-## Mutation Budget
+Aim for 450 words on simple handoffs and 900 words on complex handoffs. These are soft targets, not a hard cap: never omit critical material to meet them. Use `None material` only after confirming a category is empty; use `Unknown — reason` when evidence is unavailable.
 
-Handoff creation may change only the handoff artifacts by default, and honors `checkpoint_policy` from `.handoff/config.yaml` (`preserve-worktree` forbids any reset, clean, stash, or discard of inherited changes):
-
-- Archive the existing active handoff in the configured history directory.
-- Write the new active handoff at the configured path.
-
-Leave implementation files and untracked files in place. Do not switch or create branches, alter the index, move or quarantine files, commit, tag, stash, reset, or clean unless that exact operation is explicitly authorized. If a file may contain a secret, record only its path, the risk, and the required owner action; never copy its value into the handoff or history.
-
-## Required Repository State
-
-Record at minimum:
-
-- Repository root and current branch
-- HEAD commit and base/reference commit when known
-- Staged, unstaged, and untracked changes
-- Relevant paths
-- Whether a checkpoint commit exists
-- Any branch or commit mismatch that the receiver must know
-
-Do not paste a full diff into `HANDOFF.md`. Summarize it and preserve the real worktree; include a patch path only when one was actually created.
-
-## Validation Result Format
+## Exact Output Contract
 
 ```markdown
-| Command | Result | Evidence |
-|---|---|---|
-| `pnpm test auth` | PASS | 18 tests passed |
-| `pnpm lint` | FAIL | Existing error in `src/x.ts:42` |
-| Integration tests | NOT RUN | Required service unavailable |
+# Agent Handoff
+
+## Metadata
+## Objective
+## Work State
+### Completed
+### In Progress
+### Remaining
+## Repository State
+## Continuation Context
+## Validation and Risks
+## Next Action
 ```
 
-Only `PASS`, `FAIL`, or `NOT RUN` are allowed. Never imply success for an unexecuted command.
+`Validation and Risks` must separate fresh evidence from confirmed issues and unverified hypotheses. For each attempted or unavailable check, record the command/scope, exactly one result from `PASS`, `FAIL`, or `NOT RUN`, and concise evidence. Keep hypotheses unverified until evidence confirms them.
 
-## Next Action Contract
-
-The final action must be singular and executable: one action, not a checklist or multi-step plan.
+`Next Action` contains exactly one action, not a checklist, in this order:
 
 ```markdown
-## Next Recommended Action
-
-- Action: Fix refresh-token reuse returning HTTP 500.
-- Target files: `src/auth/refresh.ts`, `tests/auth/refresh.test.ts`
-- First command: `pnpm test tests/auth/refresh.test.ts`
-- Expected current result: Reuse case fails with HTTP 500.
-- Completion condition: Reuse case returns HTTP 401 and related tests pass.
+- Action: ...
+- Target paths: ...
+- First command: ...
+- Expected current result: ...
+- Completion condition: ...
 ```
 
-## Completion Gate
-
-A handoff is ready only when:
-
-- Every claimed change exists in the repository.
-- All validation claims match actual command results.
-- Uncommitted work is preserved and clearly described.
-- Constraints, user-stated instructions, and rejected alternatives are recorded when they affect continuation.
-- The receiver can begin with one exact command without reconstructing the conversation.
-
-## Context-Pressure Rationalizations
-
-Most bad handoffs are written in the last 5% of context. These excuses mean STOP:
-
-| Excuse | Reality |
-|---|---|
-| "No context left to run validations" | Record `NOT RUN` honestly. A fabricated PASS costs the receiver hours. |
-| "The receiver can read the diff" | The diff shows what changed, not why. Decisions die with the session. |
-| "A conversation summary is enough" | Summaries transfer narrative; handoffs transfer executable state. |
-| "Tests passed earlier" | Earlier ≠ current worktree. Re-run, or record `NOT RUN` noting the stale result. |
-| "I'll skip sections to save tokens" | A short honest handoff beats a complete-looking fabricated one. Write `UNKNOWN` in gaps. |
-
-## Red Flags
-
-- “Almost done,” “continue working,” or other non-testable status.
-- Treating a suspected cause as confirmed.
-- Listing files without explaining what changed and why.
-- Hiding failed or unrun validations.
-- Altering implementation merely to make the handoff look cleaner.
-- Inventing an archive path, moving an untracked file, or creating a branch or commit outside the Mutation Budget.
+The expected result describes the current evidence, not the hoped-for fix. The completion condition must be observable.
